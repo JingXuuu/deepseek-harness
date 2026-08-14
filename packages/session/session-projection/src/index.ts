@@ -222,6 +222,47 @@ export class SessionProjectionRegistry extends Service {
   }
 
   /**
+   * Directly set a projection unit's state for one session, bypassing the
+   * event-sourced `apply` path. The change feed is notified when the state
+   * reference changes, so clients receive a `session/projection` push frame.
+   *
+   * The caller is responsible for providing a state that is valid for the
+   * unit's `view` function. No validation beyond `Object.is` change detection
+   * is performed.
+   *
+   * @param session - the session whose projection cell to update.
+   * @param key - the registered projection key.
+   * @param state - the new internal state (plain JSON per the unit contract).
+   * @param seq - optional custom seq for the change notification; defaults to
+   *   `session.seq`. Use a monotonic value (e.g. `Date.now()`) when the update
+   *   is driven by real-time data, not a session event.
+   */
+  setProjectionValue<K extends keyof SessionProjectionMap, S>(
+    session: Session,
+    key: K,
+    state: S,
+    seq?: number,
+  ): void {
+    const registration = this.registrations.get(key as string)
+    if (registration === undefined) return
+    let cell = registration.cells.get(session)
+    if (cell === undefined) {
+      cell = this.buildCell(registration.def, session.events)
+      registration.cells.set(session, cell)
+    }
+    const changed = !Object.is(state, cell.state)
+    const effectiveSeq = seq ?? session.seq
+    cell.state = state
+    cell.observedSeq = effectiveSeq
+    if (changed && this.listeners.size > 0) {
+      const value = registration.def.schema.parse(registration.def.view(state))
+      for (const listener of this.listeners) {
+        listener(session, key as Extract<keyof SessionProjectionMap, string>, value, effectiveSeq)
+      }
+    }
+  }
+
+  /**
    * Subscribe to the change feed. The registration is an effect on the
    * calling context's fiber.
    * @param listener - called once per unit whose state reference changed, per committed event.

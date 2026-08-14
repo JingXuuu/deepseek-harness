@@ -29,6 +29,8 @@ import { EnterBehaviorRow } from './settings/EnterBehaviorRow.tsx'
 import type { EnterBehaviorRowInjected } from './settings/EnterBehaviorRow.tsx'
 import { ChatView } from './chat/ChatView.tsx'
 import { StatsLine } from './chat/StatsLine.tsx'
+import { ResourceMonitorLine } from './chat/ResourceMonitorLine.tsx'
+import { ToolStatsView } from './chat/ToolStatsView.tsx'
 import { ApprovalPanel } from './skeleton/ApprovalPanel.tsx'
 import { todoDockEntry } from './skeleton/TodoPanel.tsx'
 import { queueDockEntry } from './queue/QueueDock.tsx'
@@ -425,8 +427,21 @@ export function apply(ctx: Context): void {
     },
   }, ChatView)
 
+  // Tool call statistics view: aggregated tool usage, latency distribution,
+  // and error rates for the current session.
+  slots.register({
+    name: 'conversation.view',
+    id: 'tool-stats',
+    order: 20,
+    label: () => t('view.toolStats'),
+    locale: NS,
+  }, ToolStatsView)
+
   // Session stats stick with the composer (composer.dock = stats-line family).
   slots.register({ name: 'conversation.composer.dock', id: 'stats', order: 0, locale: NS }, StatsLine)
+
+  // Real-time resource monitor (CPU, DRAM, subagent) below the stats line.
+  slots.register({ name: 'conversation.composer.dock', id: 'resource-monitor', order: 1, locale: NS }, ResourceMonitorLine)
 
   // Class-plugin mount (packages/AGENTS.md service form): the service
   // registers itself as `conversation` and lives on its own child fiber.

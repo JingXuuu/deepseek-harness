@@ -48,6 +48,9 @@
       "path": "../../session/session-stats"
     },
     {
+      "path": "../../host/resource-monitor"
+    },
+    {
       "path": "../../llm/token-meter"
     },
     {

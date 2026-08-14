@@ -41,6 +41,17 @@ export interface WebUpgradeRoute {
   handler: (req: IncomingMessage, socket: Duplex, head: Buffer) => void | Promise<void>
 }
 
+/**
+ * Request middleware: runs before every HTTP request. Return `true` to
+ * continue processing (route matching → fallback); return `false` to stop
+ * (the middleware already wrote the response, e.g. a 401). A middleware may
+ * also intercept the response regardless of the return value.
+ */
+export type RequestMiddleware = (
+  req: IncomingMessage,
+  res: ServerResponse,
+) => boolean | Promise<boolean>
+
 /** Gateway config: the listen address. */
 export interface Config {
   /** Listen host; the two supported values are loopback and all-interfaces. */
@@ -67,6 +78,7 @@ export class WebServer extends Service {
   private readonly upgrades = new Map<string, WebUpgradeRoute>()
   private readonly upgradedSockets = new Set<Duplex>()
   private readonly indexTaps: ((html: string) => string)[] = []
+  private readonly middlewares: RequestMiddleware[] = []
   private fallback: WebRoute['handler'] | undefined
   private server!: Server
   private listenedPort!: number
@@ -144,9 +156,30 @@ export class WebServer extends Service {
     }
   }
 
+  /**
+   * Register a request middleware that runs before route matching on every
+   * HTTP request. The middleware may inspect or modify the request, write the
+   * response directly (returning `false` to stop processing), or allow the
+   * request to continue (returning `true`).
+   * @param middleware - the middleware function.
+   * @returns the disposer removing the middleware.
+   */
+  use(middleware: RequestMiddleware): () => void {
+    this.middlewares.push(middleware)
+    return () => {
+      const at = this.middlewares.indexOf(middleware)
+      if (at !== -1) this.middlewares.splice(at, 1)
+    }
+  }
+
   /** Listen; resolves once the socket is bound (rejection = FAILED fiber). */
   async [Service.init](): Promise<void> {
     const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+      // Run request middlewares; any middleware returning false handled the response.
+      for (const middleware of this.middlewares) {
+        const proceed = await middleware(req, res)
+        if (!proceed) return
+      }
       /* v8 ignore next -- `?? '/'` arm: node:http always sets url on server
       requests; the field is only optional on the client-side IncomingMessage type */
       const rawPath = new URL(req.url ?? '/', 'http://x').pathname

@@ -84,6 +84,18 @@
     - id: session-stats
       name: '@deepseek-ai/dsh-session-stats'
 
+    # Real-time host resource usage (CPU, DRAM, subagent count) for the
+    # resource monitor line below the chat stats strip.
+    - id: resource-monitor
+      name: '@deepseek-ai/dsh-resource-monitor'
+
+    # Simple password protection for the Web GUI. Configure via
+    # DSH_WEB_PASSWORD environment variable or the profile's cordis.patch.yml.
+    - id: password-guard
+      name: '@deepseek-ai/dsh-password-guard'
+      config:
+        password: !!js process.env.DSH_WEB_PASSWORD ?? ''
+
     # Resolve bind host, SSH launch, and display once at boot, then mount the
     # matching dual-face directory picker. Mount -native or -browse directly in
     # an overlay to pin the interaction.

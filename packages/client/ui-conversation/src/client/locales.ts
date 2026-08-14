@@ -11,6 +11,7 @@ const PLAN_NEXT_ACTION_EN = 'describe your task to generate plan'
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
   'view.chat': '对话',
+  'view.toolStats': '工具统计',
   'hint.plan': PLAN_NEXT_ACTION_ZH,
   'hint.goal': '输入目标，智能体将持续执行',
   'hint.goal.active': '当前目标进行中。可输入 edit 修改 / pause 暂停 / resume 继续 / clear 清除',
@@ -61,6 +62,9 @@ export const zh = {
   'stats.tokensPerSecond': '{throughput} tok/s',
   'stats.cacheHit': '缓存命中 {percent}%',
   'stats.tokens': '输入 {input} tok · 输出 {output} tok',
+  'resource.cpu': 'CPU {percent}',
+  'resource.memory': 'DRAM {used}/{total}（{percent}）',
+  'resource.subagents': '子代理 {count} 个活跃',
   'settings.enter.title': '繁忙时 Enter 键行为',
   'settings.enter.description': '仅在智能体运行时生效；Cmd/Ctrl+Enter 使用另一行为',
   'settings.enter.queue': '排队发送',
@@ -180,6 +184,7 @@ export type ConversationKey = keyof typeof zh
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
   'view.chat': 'Chat',
+  'view.toolStats': 'Tool Stats',
   'hint.plan': PLAN_NEXT_ACTION_EN,
   'hint.goal': 'describe the objective for a long-running task',
   'hint.goal.active': 'goal active — edit / pause / resume / clear',
@@ -230,6 +235,9 @@ export const en = {
   'stats.tokensPerSecond': '{throughput} tok/s',
   'stats.cacheHit': 'Cache hit {percent}%',
   'stats.tokens': 'Input {input} tok · Output {output} tok',
+  'resource.cpu': 'CPU {percent}',
+  'resource.memory': 'DRAM {used}/{total} ({percent})',
+  'resource.subagents': '{count} subagent(s) active',
   'settings.enter.title': 'Enter behavior while busy',
   'settings.enter.description': 'Busy only; Cmd/Ctrl+Enter uses the other behavior',
   'settings.enter.queue': 'Queue',
